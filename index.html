@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#004b6b" />
+  <title>Calculadora de Magnitud Sísmica</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f4f7; }
+    .card { background: white; padding: 20px; border-radius: 16px; max-width: 430px; margin: 20px auto; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+    h2 { margin-top: 0; color: #004b6b; text-align: center; }
+    label { display: block; margin-top: 12px; font-weight: bold; font-size: 14px; }
+    input { width: 100%; padding: 8px 10px; margin-top: 4px; border-radius: 8px; border: 1px solid #ccd3da; box-sizing: border-box; }
+    button { margin-top: 18px; width: 100%; padding: 12px; background: #004b6b; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #003c57; }
+    .resultado { margin-top: 14px; font-size: 18px; font-weight: bold; text-align: center; color: #222; }
+    .nota { margin-top: 8px; font-size: 12px; color: #555; text-align: center; }
+    svg { width: 100%; height: 420px; margin-top: 18px; background: #f8fafc; border-radius: 12px; border: 1px solid #dde3ea; }
+    .axis-label { font-size: 11px; fill: #222; }
+    .tick-label { font-size: 9px; fill: #444; }
+    .axis-line { stroke: #555; stroke-width: 1; }
+    .guide-line { stroke: #999; stroke-width: 0.5; stroke-dasharray: 3 3; }
+    .mag-line { stroke: #c62828; stroke-width: 2; }
+    .point { fill: #c62828; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Calculadora de Magnitud (ML)</h2>
+
+    <label for="p">Tiempo de arribo P (s)</label>
+    <input type="number" id="p" step="0.01" />
+
+    <label for="s">Tiempo de arribo S (s)</label>
+    <input type="number" id="s" step="0.01" />
+
+    <label for="amp">Amplitud máxima (mm)</label>
+    <input type="number" id="amp" step="0.01" />
+
+    <button onclick="calcularML()">Calcular magnitud y trazar recta</button>
+
+    <div class="resultado" id="resultado"></div>
+    <div class="nota">Se usa una fórmula aproximada de magnitud local tipo Richter.</div>
+
+    <svg id="nomograma" viewBox="0 0 320 420">
+      <g id="axes"></g>
+      <g id="plot"></g>
+    </svg>
+  </div>
+
+  <script>
+    const dMin = 20;
+    const dMax = 600;
+    const aMin = 0.1;
+    const aMax = 200;
+    const mMin = 0;
+    const mMax = 8;
+
+    const svgHeight = 420;
+    const topMargin = 30;
+    const bottomMargin = 40;
+    const axisHeight = svgHeight - topMargin - bottomMargin;
+
+    const xDist = 50;
+    const xMag  = 160;
+    const xAmp  = 270;
+
+    function yFromLog(value, vMin, vMax) {
+      const logMin = Math.log10(vMin);
+      const logMax = Math.log10(vMax);
+      const t = (Math.log10(value) - logMin) / (logMax - logMin);
+      return topMargin + (1 - t) * axisHeight;
+    }
+
+    function yFromLinear(value, vMin, vMax) {
+      const t = (value - vMin) / (vMax - vMin);
+      return topMargin + (1 - t) * axisHeight;
+    }
+
+    function drawAxes() {
+      const axes = document.getElementById("axes");
+      axes.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
+
+      function line(x1, y1, x2, y2, cls) {
+        const el = document.createElementNS(ns, "line");
+        el.setAttribute("x1", x1);
+        el.setAttribute("y1", y1);
+        el.setAttribute("x2", x2);
+        el.setAttribute("y2", y2);
+        el.setAttribute("class", cls);
+        axes.appendChild(el);
+      }
+
+      function text(x, y, txt, anchor="middle", cls="axis-label") {
+        const el = document.createElementNS(ns, "text");
+        el.setAttribute("x", x);
+        el.setAttribute("y", y);
+        el.setAttribute("text-anchor", anchor);
+        el.setAttribute("class", cls);
+        el.textContent = txt;
+        axes.appendChild(el);
+      }
+
+      line(xDist, topMargin, xDist, topMargin+axisHeight, "axis-line");
+      line(xMag, topMargin, xMag, topMargin+axisHeight, "axis-line");
+      line(xAmp, topMargin, xAmp, topMargin+axisHeight, "axis-line");
+
+      text(xDist, 18, "DISTANCIA (km)");
+      text(xMag, 18, "MAGNITUD");
+      text(xAmp, 18, "AMPLITUD (mm)");
+
+      [20,30,50,100,200,300,500].forEach(v=>{
+        const y=yFromLog(v,dMin,dMax);
+        line(xDist-4,y,xDist+4,y,"axis-line");
+        text(xDist-8,y+3,v,"end","tick-label");
+      });
+
+      for(let m=mMin;m<=mMax;m++){
+        const y=yFromLinear(m,mMin,mMax);
+        line(xMag-4,y,xMag+4,y,"axis-line");
+        text(xMag+8,y+3,m,"start","tick-label");
+      }
+
+      [0.1,0.2,0.5,1,2,5,10,20,50,100,200].forEach(v=>{
+        const y=yFromLog(v,aMin,aMax);
+        line(xAmp-4,y,xAmp+4,y,"axis-line");
+        text(xAmp+8,y+3,v,"start","tick-label");
+      });
+    }
+
+    function calcularML() {
+      const tP=parseFloat(p.value), tS=parseFloat(s.value), A=parseFloat(amp.value);
+      if(isNaN(tP)||isNaN(tS)||isNaN(A)) { resultado.textContent="Completa todos los campos."; limpiar(); return;}
+      const SP=tS-tP; if(SP<=0){resultado.textContent="S debe ser mayor que P."; limpiar(); return;}
+      const dist=SP*8;
+      if(dist<dMin||dist>dMax||A<aMin||A>aMax){resultado.textContent="Valores fuera del rango del nomograma."; limpiar(); return;}
+      const ML=Math.log10(A)+3*Math.log10(dist)-2.92;
+      resultado.textContent=`Magnitud estimada: ${ML.toFixed(2)}`;
+      trazar(dist,A,ML);
+    }
+
+    function limpiar(){ document.getElementById("plot").innerHTML=""; }
+
+    function trazar(dist,ampVal,ML){
+      const plot=document.getElementById("plot");
+      plot.innerHTML="";
+      const ns="http://www.w3.org/2000/svg";
+
+      function el(type,attrs){
+        const e=document.createElementNS(ns,type);
+        for(const k in attrs) e.setAttribute(k,attrs[k]);
+        plot.appendChild(e);
+      }
+
+      const yD=yFromLog(dist,dMin,dMax);
+      const yA=yFromLog(ampVal,aMin,aMax);
+      const yM=yFromLinear(ML,mMin,mMax);
+
+      el("line",{x1:xDist,y1:yD,x2:xAmp,y2:yA,class:"mag-line"});
+      el("line",{x1:xDist,y1:yM,x2:xAmp,y2:yM,class:"guide-line"});
+      el("circle",{cx:xMag,cy:yM,r:4,class:"point"});
+    }
+
+    if("serviceWorker" in navigator){
+      window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
+    }
+
+    document.addEventListener("DOMContentLoaded",drawAxes);
+  </script>
+</body>
+</html>
