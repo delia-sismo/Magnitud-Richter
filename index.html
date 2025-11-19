@@ -44,16 +44,25 @@
     <div class="nota">Se usa una fórmula aproximada de magnitud local tipo Richter.</div>
 
     <svg id="nomograma" viewBox="0 0 320 420">
+      <!-- Ejes y elementos se dibujan con JavaScript -->
       <g id="axes"></g>
       <g id="plot"></g>
     </svg>
+
+    <h3 style="text-align:center; color:#004b6b; margin-top:25px;">Sismogramas</h3>
+    <p style="font-size:12px; text-align:center; color:#444; margin-top:0;">Lecturas para el ejercicio</p>
+
+    <img src="ARIG.jpg" alt="Sismograma ARIG" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="CMIG.jpg" alt="Sismograma CMIG" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="MOIG.jpg" alt="Sismograma MOIG" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+
   </div>
 
   <script>
-    const dMin = 20;
-    const dMax = 600;
-    const aMin = 0.1;
-    const aMax = 200;
+    const dMin = 20;   // km
+    const dMax = 600;  // km
+    const aMin = 0.1;  // mm
+    const aMax = 200;  // mm
     const mMin = 0;
     const mMax = 8;
 
@@ -79,95 +88,230 @@
     }
 
     function drawAxes() {
+      const svg = document.getElementById("nomograma");
       const axes = document.getElementById("axes");
       axes.innerHTML = "";
       const ns = "http://www.w3.org/2000/svg";
 
-      function line(x1, y1, x2, y2, cls) {
-        const el = document.createElementNS(ns, "line");
-        el.setAttribute("x1", x1);
-        el.setAttribute("y1", y1);
-        el.setAttribute("x2", x2);
-        el.setAttribute("y2", y2);
-        el.setAttribute("class", cls);
-        axes.appendChild(el);
-      }
+      // Ejes principales
+      const distAxis = document.createElementNS(ns, "line");
+      distAxis.setAttribute("x1", xDist);
+      distAxis.setAttribute("x2", xDist);
+      distAxis.setAttribute("y1", topMargin);
+      distAxis.setAttribute("y2", topMargin + axisHeight);
+      distAxis.setAttribute("class", "axis-line");
+      axes.appendChild(distAxis);
 
-      function text(x, y, txt, anchor="middle", cls="axis-label") {
-        const el = document.createElementNS(ns, "text");
-        el.setAttribute("x", x);
-        el.setAttribute("y", y);
-        el.setAttribute("text-anchor", anchor);
-        el.setAttribute("class", cls);
-        el.textContent = txt;
-        axes.appendChild(el);
-      }
+      const magAxis = document.createElementNS(ns, "line");
+      magAxis.setAttribute("x1", xMag);
+      magAxis.setAttribute("x2", xMag);
+      magAxis.setAttribute("y1", topMargin);
+      magAxis.setAttribute("y2", topMargin + axisHeight);
+      magAxis.setAttribute("class", "axis-line");
+      axes.appendChild(magAxis);
 
-      line(xDist, topMargin, xDist, topMargin+axisHeight, "axis-line");
-      line(xMag, topMargin, xMag, topMargin+axisHeight, "axis-line");
-      line(xAmp, topMargin, xAmp, topMargin+axisHeight, "axis-line");
+      const ampAxis = document.createElementNS(ns, "line");
+      ampAxis.setAttribute("x1", xAmp);
+      ampAxis.setAttribute("x2", xAmp);
+      ampAxis.setAttribute("y1", topMargin);
+      ampAxis.setAttribute("y2", topMargin + axisHeight);
+      ampAxis.setAttribute("class", "axis-line");
+      axes.appendChild(ampAxis);
 
-      text(xDist, 18, "DISTANCIA (km)");
-      text(xMag, 18, "MAGNITUD");
-      text(xAmp, 18, "AMPLITUD (mm)");
+      // Etiquetas de ejes
+      const distLabel = document.createElementNS(ns, "text");
+      distLabel.setAttribute("x", xDist);
+      distLabel.setAttribute("y", 18);
+      distLabel.setAttribute("text-anchor", "middle");
+      distLabel.setAttribute("class", "axis-label");
+      distLabel.textContent = "DISTANCIA (km)";
+      axes.appendChild(distLabel);
 
-      [20,30,50,100,200,300,500].forEach(v=>{
-        const y=yFromLog(v,dMin,dMax);
-        line(xDist-4,y,xDist+4,y,"axis-line");
-        text(xDist-8,y+3,v,"end","tick-label");
+      const magLabel = document.createElementNS(ns, "text");
+      magLabel.setAttribute("x", xMag);
+      magLabel.setAttribute("y", 18);
+      magLabel.setAttribute("text-anchor", "middle");
+      magLabel.setAttribute("class", "axis-label");
+      magLabel.textContent = "MAGNITUD";
+      axes.appendChild(magLabel);
+
+      const ampLabel = document.createElementNS(ns, "text");
+      ampLabel.setAttribute("x", xAmp);
+      ampLabel.setAttribute("y", 18);
+      ampLabel.setAttribute("text-anchor", "middle");
+      ampLabel.setAttribute("class", "axis-label");
+      ampLabel.textContent = "AMPLITUD (mm)";
+      axes.appendChild(ampLabel);
+
+      // Ticks distancia (log)
+      const distTicks = [20, 30, 50, 100, 200, 300, 500];
+      distTicks.forEach(v => {
+        const y = yFromLog(v, dMin, dMax);
+        const tick = document.createElementNS(ns, "line");
+        tick.setAttribute("x1", xDist - 4);
+        tick.setAttribute("x2", xDist + 4);
+        tick.setAttribute("y1", y);
+        tick.setAttribute("y2", y);
+        tick.setAttribute("class", "axis-line");
+        axes.appendChild(tick);
+
+        const label = document.createElementNS(ns, "text");
+        label.setAttribute("x", xDist - 8);
+        label.setAttribute("y", y + 3);
+        label.setAttribute("text-anchor", "end");
+        label.setAttribute("class", "tick-label");
+        label.textContent = v;
+        axes.appendChild(label);
       });
 
-      for(let m=mMin;m<=mMax;m++){
-        const y=yFromLinear(m,mMin,mMax);
-        line(xMag-4,y,xMag+4,y,"axis-line");
-        text(xMag+8,y+3,m,"start","tick-label");
+      // Ticks magnitud (lineal)
+      for (let m = mMin; m <= mMax; m += 1) {
+        const y = yFromLinear(m, mMin, mMax);
+        const tick = document.createElementNS(ns, "line");
+        tick.setAttribute("x1", xMag - 4);
+        tick.setAttribute("x2", xMag + 4);
+        tick.setAttribute("y1", y);
+        tick.setAttribute("y2", y);
+        tick.setAttribute("class", "axis-line");
+        axes.appendChild(tick);
+
+        const label = document.createElementNS(ns, "text");
+        label.setAttribute("x", xMag + 8);
+        label.setAttribute("y", y + 3);
+        label.setAttribute("text-anchor", "start");
+        label.setAttribute("class", "tick-label");
+        label.textContent = m.toString();
+        axes.appendChild(label);
       }
 
-      [0.1,0.2,0.5,1,2,5,10,20,50,100,200].forEach(v=>{
-        const y=yFromLog(v,aMin,aMax);
-        line(xAmp-4,y,xAmp+4,y,"axis-line");
-        text(xAmp+8,y+3,v,"start","tick-label");
+      // Ticks amplitud (log)
+      const ampTicks = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200];
+      ampTicks.forEach(v => {
+        const y = yFromLog(v, aMin, aMax);
+        const tick = document.createElementNS(ns, "line");
+        tick.setAttribute("x1", xAmp - 4);
+        tick.setAttribute("x2", xAmp + 4);
+        tick.setAttribute("y1", y);
+        tick.setAttribute("y2", y);
+        tick.setAttribute("class", "axis-line");
+        axes.appendChild(tick);
+
+        const label = document.createElementNS(ns, "text");
+        label.setAttribute("x", xAmp + 8);
+        label.setAttribute("y", y + 3);
+        label.setAttribute("text-anchor", "start");
+        label.setAttribute("class", "tick-label");
+        label.textContent = v;
+        axes.appendChild(label);
       });
     }
 
     function calcularML() {
-      const tP=parseFloat(p.value), tS=parseFloat(s.value), A=parseFloat(amp.value);
-      if(isNaN(tP)||isNaN(tS)||isNaN(A)) { resultado.textContent="Completa todos los campos."; limpiar(); return;}
-      const SP=tS-tP; if(SP<=0){resultado.textContent="S debe ser mayor que P."; limpiar(); return;}
-      const dist=SP*8;
-      if(dist<dMin||dist>dMax||A<aMin||A>aMax){resultado.textContent="Valores fuera del rango del nomograma."; limpiar(); return;}
-      const ML=Math.log10(A)+3*Math.log10(dist)-2.92;
-      resultado.textContent=`Magnitud estimada: ${ML.toFixed(2)}`;
-      trazar(dist,A,ML);
-    }
+      const tP = parseFloat(document.getElementById("p").value);
+      const tS = parseFloat(document.getElementById("s").value);
+      const A  = parseFloat(document.getElementById("amp").value);
+      const resDiv = document.getElementById("resultado");
 
-    function limpiar(){ document.getElementById("plot").innerHTML=""; }
-
-    function trazar(dist,ampVal,ML){
-      const plot=document.getElementById("plot");
-      plot.innerHTML="";
-      const ns="http://www.w3.org/2000/svg";
-
-      function el(type,attrs){
-        const e=document.createElementNS(ns,type);
-        for(const k in attrs) e.setAttribute(k,attrs[k]);
-        plot.appendChild(e);
+      if (isNaN(tP) || isNaN(tS) || isNaN(A)) {
+        resDiv.textContent = "Por favor llena todos los campos.";
+        limpiarGrafica();
+        return;
       }
 
-      const yD=yFromLog(dist,dMin,dMax);
-      const yA=yFromLog(ampVal,aMin,aMax);
-      const yM=yFromLinear(ML,mMin,mMax);
+      const SP = tS - tP;
+      if (SP <= 0) {
+        resDiv.textContent = "El tiempo S debe ser mayor que el tiempo P.";
+        limpiarGrafica();
+        return;
+      }
 
-      el("line",{x1:xDist,y1:yD,x2:xAmp,y2:yA,class:"mag-line"});
-      el("line",{x1:xDist,y1:yM,x2:xAmp,y2:yM,class:"guide-line"});
-      el("circle",{cx:xMag,cy:yM,r:4,class:"point"});
+      const distancia = SP * 8; // km
+      if (distancia < dMin || distancia > dMax || A < aMin || A > aMax) {
+        resDiv.textContent = "Valores fuera del rango del nomograma (distancia 20–600 km, amplitud 0.1–200 mm).";
+        limpiarGrafica();
+        return;
+      }
+
+      // Fórmula aproximada de magnitud local tipo Richter: ML = log10(A) + 3 log10(Δ) - 2.92
+      const ML = Math.log10(A) + 3 * Math.log10(distancia) - 2.92;
+      resDiv.textContent = `Magnitud estimada: ${ML.toFixed(2)}`;
+
+      dibujarLinea(distancia, A, ML);
     }
 
-    if("serviceWorker" in navigator){
-      window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
+    function limpiarGrafica() {
+      const plot = document.getElementById("plot");
+      plot.innerHTML = "";
     }
 
-    document.addEventListener("DOMContentLoaded",drawAxes);
+    function dibujarLinea(distancia, amplitud, ML) {
+      const plot = document.getElementById("plot");
+      plot.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
+
+      const yDist = yFromLog(distancia, dMin, dMax);
+      const yAmp  = yFromLog(amplitud, aMin, aMax);
+      const yMag  = yFromLinear(ML, mMin, mMax);
+
+      // Línea que une distancia y amplitud
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", xDist);
+      line.setAttribute("y1", yDist);
+      line.setAttribute("x2", xAmp);
+      line.setAttribute("y2", yAmp);
+      line.setAttribute("class", "mag-line");
+      plot.appendChild(line);
+
+      // Proyección de la recta sobre el eje de magnitud (intersección)
+      // Para simplificar, dibujamos una línea guía horizontal en la magnitud calculada
+      const guide = document.createElementNS(ns, "line");
+      guide.setAttribute("x1", xDist);
+      guide.setAttribute("y1", yMag);
+      guide.setAttribute("x2", xAmp);
+      guide.setAttribute("y2", yMag);
+      guide.setAttribute("class", "guide-line");
+      plot.appendChild(guide);
+
+      // Punto en el eje de magnitud
+      const magPoint = document.createElementNS(ns, "circle");
+      magPoint.setAttribute("cx", xMag);
+      magPoint.setAttribute("cy", yMag);
+      magPoint.setAttribute("r", 4);
+      magPoint.setAttribute("class", "point");
+      plot.appendChild(magPoint);
+    }
+
+    // Registrar service worker para PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(err => {
+          console.log("SW no registrado", err);
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", drawAxes);
+  </script>
+  <!-- Modal para zoom de imágenes -->
+  <div id="imgModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
+    <img id="modalImg" src="" style="max-width:90%; max-height:90%; border-radius:12px;">
+  </div>
+
+  <script>
+    // Activar zoom al tocar una imagen
+    document.querySelectorAll("img").forEach(img => {
+      img.style.cursor = "zoom-in";
+      img.addEventListener("click", () => {
+        document.getElementById("modalImg").src = img.src;
+        document.getElementById("imgModal").style.display = "flex";
+      });
+    });
+
+    // Cerrar el zoom al tocar afuera
+    document.getElementById("imgModal").addEventListener("click", () => {
+      document.getElementById("imgModal").style.display = "none";
+    });
   </script>
 </body>
 </html>
+
