@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang=\"es\">
+<html lang="es">
 <head>
-  <meta charset=\"UTF-8\" />
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
-  <meta name=\"theme-color\" content=\"004b6b\" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="004b6b" />
   <title>Calculadora de Magnitud Sísmica</title>
-  <link rel=\"manifest\" href=\"manifest.json\" />
+  <link rel="manifest" href="manifest.json" />
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f4f7; }
     .card { background: white; padding: 20px; border-radius: 16px; max-width: 430px; margin: 20px auto; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
@@ -26,34 +26,34 @@
   </style>
 </head>
 <body>
-  <div class=\"card\">
+  <div class="card">
     <h2>Calculadora de Magnitud (ML)</h2>
 
-    <label for=\"p\">Tiempo de arribo P (s)</label>
-    <input type=\"number\" id=\"p\" step=\"0.01\" />
+    <label for="p">Tiempo de arribo P (s)</label>
+    <input type="number" id="p" step="0.01" />
 
-    <label for=\"s\">Tiempo de arribo S (s)</label>
-    <input type=\"number\" id=\"s\" step=\"0.01\" />
+    <label for="s">Tiempo de arribo S (s)</label>
+    <input type="number" id="s" step="0.01" />
 
-    <label for=\"amp\">Amplitud máxima (mm)</label>
-    <input type=\"number\" id=\"amp\" step=\"0.01\" />
+    <label for="amp">Amplitud máxima (mm)</label>
+    <input type="number" id="amp" step="0.01" />
 
-    <button onclick=\"calcularML()\">Calcular magnitud y trazar recta</button>
+    <button onclick="calcularML()">Calcular magnitud y trazar recta</button>
 
-    <div class=\"resultado\" id=\"resultado\"></div>
-    <div class=\"nota\">Se usa una fórmula aproximada de magnitud local tipo Richter.</div>
+    <div class="resultado" id="resultado"></div>
+    <div class="nota">Se usa una fórmula aproximada de magnitud local tipo Richter.</div>
 
-    <svg id=\"nomograma\" viewBox=\"0 0 320 420\">
-      <g id=\"axes\"></g>
-      <g id=\"plot\"></g>
+    <svg id="nomograma" viewBox="0 0 320 420">
+      <g id="axes"></g>
+      <g id="plot"></g>
     </svg>
 
-    <h3 style=\"text-align:center; color:#004b6b; margin-top:25px;\">Sismogramas</h3>
-    <p style=\"font-size:12px; text-align:center; color:#444; margin-top:0;\">Lecturas para el ejercicio</p>
+    <h3 style="text-align:center; color:#004b6b; margin-top:25px;">Sismogramas</h3>
+    <p style="font-size:12px; text-align:center; color:#444; margin-top:0;">Lecturas para el ejercicio</p>
 
-    <img src=\"ARIG.jpg\" alt=\"Sismograma ARIG\" style=\"width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;\">
-    <img src=\"CMIG.jpg\" alt=\"Sismograma CMIG\" style=\"width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;\">
-    <img src=\"MOIG.jpg\" alt=\"Sismograma MOIG\" style=\"width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;\">
+    <img src="ARIG.jpg" alt="Sismograma ARIG" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="CMIG.jpg" alt="Sismograma CMIG" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="MOIG.jpg" alt="Sismograma MOIG" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
   </div>
 
   <script>
@@ -86,76 +86,76 @@
     }
 
     function drawAxes() {
-      const axes = document.getElementById(\"axes\");
-      axes.innerHTML = \"\";
-      const ns = \"http://www.w3.org/2000/svg\";
+      const axes = document.getElementById("axes");
+      axes.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
 
       function line(x1, y1, x2, y2, cls) {
-        const el = document.createElementNS(ns, \"line\");
-        el.setAttribute(\"x1\", x1);
-        el.setAttribute(\"y1\", y1);
-        el.setAttribute(\"x2\", x2);
-        el.setAttribute(\"y2\", y2);
-        el.setAttribute(\"class\", cls);
+        const el = document.createElementNS(ns, "line");
+        el.setAttribute("x1", x1);
+        el.setAttribute("y1", y1);
+        el.setAttribute("x2", x2);
+        el.setAttribute("y2", y2);
+        el.setAttribute("class", cls);
         axes.appendChild(el);
       }
 
-      function textEl(x, y, txt, anchor=\"middle\", cls=\"axis-label\") {
-        const el = document.createElementNS(ns, \"text\");
-        el.setAttribute(\"x\", x);
-        el.setAttribute(\"y\", y);
-        el.setAttribute(\"text-anchor\", anchor);
-        el.setAttribute(\"class\", cls);
+      function textEl(x, y, txt, anchor="middle", cls="axis-label") {
+        const el = document.createElementNS(ns, "text");
+        el.setAttribute("x", x);
+        el.setAttribute("y", y);
+        el.setAttribute("text-anchor", anchor);
+        el.setAttribute("class", cls);
         el.textContent = txt;
         axes.appendChild(el);
       }
 
-      line(xDist, topMargin, xDist, topMargin+axisHeight, \"axis-line\");
-      line(xMag, topMargin, xMag, topMargin+axisHeight, \"axis-line\");
-      line(xAmp, topMargin, xAmp, topMargin+axisHeight, \"axis-line\");
+      line(xDist, topMargin, xDist, topMargin+axisHeight, "axis-line");
+      line(xMag, topMargin, xMag, topMargin+axisHeight, "axis-line");
+      line(xAmp, topMargin, xAmp, topMargin+axisHeight, "axis-line");
 
-      textEl(xDist, 18, \"DISTANCIA (km)\");
-      textEl(xMag, 18, \"MAGNITUD\");
-      textEl(xAmp, 18, \"AMPLITUD (mm)\");
+      textEl(xDist, 18, "DISTANCIA (km)");
+      textEl(xMag, 18, "MAGNITUD");
+      textEl(xAmp, 18, "AMPLITUD (mm)");
 
       [20,30,50,100,200,300,500].forEach(v=>{
         const y=yFromLog(v,dMin,dMax);
-        line(xDist-4,y,xDist+4,y,\"axis-line\");
-        textEl(xDist-8,y+3,v,\"end\",\"tick-label\");
+        line(xDist-4,y,xDist+4,y,"axis-line");
+        textEl(xDist-8,y+3,v,"end","tick-label");
       });
 
       for(let m=mMin;m<=mMax;m++){
         const y=yFromLinear(m,mMin,mMax);
-        line(xMag-4,y,xMag+4,y,\"axis-line\");
-        textEl(xMag+8,y+3,m,\"start\",\"tick-label\");
+        line(xMag-4,y,xMag+4,y,"axis-line");
+        textEl(xMag+8,y+3,m,"start","tick-label");
       }
 
       [0.1,0.2,0.5,1,2,5,10,20,50,100,200].forEach(v=>{
         const y=yFromLog(v,aMin,aMax);
-        line(xAmp-4,y,xAmp+4,y,\"axis-line\");
-        textEl(xAmp+8,y+3,v,\"start\",\"tick-label\");
+        line(xAmp-4,y,xAmp+4,y,"axis-line");
+        textEl(xAmp+8,y+3,v,"start","tick-label");
       });
     }
 
     function calcularML() {
-      const tP=parseFloat(document.getElementById(\"p\").value),
-            tS=parseFloat(document.getElementById(\"s\").value),
-            A =parseFloat(document.getElementById(\"amp\").value);
-      const resultado = document.getElementById(\"resultado\");
+      const tP=parseFloat(document.getElementById("p").value),
+            tS=parseFloat(document.getElementById("s").value),
+            A =parseFloat(document.getElementById("amp").value);
+      const resultado = document.getElementById("resultado");
       if(isNaN(tP)||isNaN(tS)||isNaN(A)) {
-        resultado.textContent=\"Completa todos los campos.\";
+        resultado.textContent="Completa todos los campos.";
         limpiar();
         return;
       }
       const SP=tS-tP;
       if(SP<=0){
-        resultado.textContent=\"S debe ser mayor que P.\";
+        resultado.textContent="S debe ser mayor que P.";
         limpiar();
         return;
       }
       const dist=SP*8;
       if(dist<dMin||dist>dMax||A<aMin||A>aMax){
-        resultado.textContent=\"Valores fuera del rango del nomograma.\";
+        resultado.textContent="Valores fuera del rango del nomograma.";
         limpiar();
         return;
       }
@@ -165,13 +165,13 @@
     }
 
     function limpiar(){
-      document.getElementById(\"plot\").innerHTML=\"\";
+      document.getElementById("plot").innerHTML="";
     }
 
     function trazar(dist,ampVal,ML){
-      const plot=document.getElementById(\"plot\");
-      plot.innerHTML=\"\";
-      const ns=\"http://www.w3.org/2000/svg\";
+      const plot=document.getElementById("plot");
+      plot.innerHTML="";
+      const ns="http://www.w3.org/2000/svg";
 
       function el(type,attrs){
         const e=document.createElementNS(ns,type);
@@ -183,34 +183,34 @@
       const yA=yFromLog(ampVal,aMin,aMax);
       const yM=yFromLinear(ML,mMin,mMax);
 
-      el(\"line\",{x1:xDist,y1:yD,x2:xAmp,y2:yA,class:\"mag-line\"});
-      el(\"line\",{x1:xDist,y1:yM,x2:xAmp,y2:yM,class:\"guide-line\"});
-      el(\"circle\",{cx:xMag,cy:yM,r:4,class:\"point\"});
+      el("line",{x1:xDist,y1:yD,x2:xAmp,y2:yA,class:"mag-line"});
+      el("line",{x1:xDist,y1:yM,x2:xAmp,y2:yM,class:"guide-line"});
+      el("circle",{cx:xMag,cy:yM,r:4,class:"point"});
     }
 
-    if(\"serviceWorker\" in navigator){
-      window.addEventListener(\"load\",()=>navigator.serviceWorker.register(\"sw.js\"));
+    if("serviceWorker" in navigator){
+      window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
     }
 
-    document.addEventListener(\"DOMContentLoaded\",drawAxes);
+    document.addEventListener("DOMContentLoaded",drawAxes);
   </script>
 
-  <div id=\"imgModal\" style=\"display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center;\">
-    <img id=\"modalImg\" src=\"\" style=\"max-width:90%; max-height:90%; border-radius:12px;\">
+  <div id="imgModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
+    <img id="modalImg" src="" style="max-width:90%; max-height:90%; border-radius:12px;">
   </div>
 
   <script>
-    document.addEventListener(\"DOMContentLoaded\", () => {
-      document.querySelectorAll(\"img\").forEach(img => {
-        img.style.cursor = \"zoom-in\";
-        img.addEventListener(\"click\", () => {
-          document.getElementById(\"modalImg\").src = img.src;
-          document.getElementById(\"imgModal\").style.display = \"flex\";
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("img").forEach(img => {
+        img.style.cursor = "zoom-in";
+        img.addEventListener("click", () => {
+          document.getElementById("modalImg").src = img.src;
+          document.getElementById("imgModal").style.display = "flex";
         });
       });
 
-      document.getElementById(\"imgModal\").addEventListener(\"click\", () => {
-        document.getElementById(\"imgModal\").style.display = \"none\";
+      document.getElementById("imgModal").addEventListener("click", () => {
+        document.getElementById("imgModal").style.display = "none";
       });
     });
   </script>
