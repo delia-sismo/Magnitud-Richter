@@ -1,9 +1,9 @@
 
 const CACHE_NAME = "magnitud-ml-v1";
-const URLS_TO_CACHE = ["./","./index.html","./manifest.json"];
+const URLS_TO_CACHE = ["./","./index.html","./manifest.json","./ARIG.jpg","./CMIG.jpg","./MOIG.jpg"];
 
 self.addEventListener("install", e=>{
-  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS_TO_CACHE)))
+  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(URLS_TO_CACHE)));
 });
 
 self.addEventListener("fetch", e=>{
