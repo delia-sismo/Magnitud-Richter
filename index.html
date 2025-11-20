@@ -86,10 +86,25 @@
       return topMargin + (1 - t) * axisHeight;
     }
 
-    function yFromLinear(value, vMin, vMax) {
-      const t = (value - vMin) / (vMax - vMin);
-      return topMargin + (1 - t) * axisHeight;
-    }
+// Magnitud calibrada para que M0 ↔ 5 km  y M6 ↔ 350 km
+function yFromMag(M) {
+
+  // log10 de los puntos de referencia
+  const logD0 = Math.log10(5);      // magnitud 0
+  const logD6 = Math.log10(350);    // magnitud 6
+
+  // pendiente log-distancia por grado de magnitud
+  const slope = (logD6 - logD0) / 6;
+
+  // log-distancia correspondiente a esta magnitud
+  const logDM = logD0 + slope * M;
+
+  // Convertimos a posición vertical (comparando contra eje logarítmico real)
+  const t = (logDM - Math.log10(dMin)) / (Math.log10(dMax) - Math.log10(dMin));
+
+  return topMargin + (1 - t) * axisHeight;
+}
+
 
     function drawAxes() {
       const axes = document.getElementById("axes");
@@ -196,7 +211,7 @@
 
       const yD = yFromLog(dist, dMin, dMax);
       const yA = yFromLog(ampVal, aMin, aMax);
-      const yM = yFromLinear(ML, mMin, mMax);
+      const yM = yFromMag(ML);
 
       // Línea distancia–amplitud
       el("line", { x1:xDist, y1:yD, x2:xAmp, y2:yA, class:"mag-line" });
