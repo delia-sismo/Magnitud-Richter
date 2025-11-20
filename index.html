@@ -63,12 +63,12 @@
 
   <script>
     // Parámetros del nomograma
-    const dMin = 5;
+    const dMin = 5;     // 0 de magnitud alineado con 5 km
     const dMax = 600;
     const aMin = 0.1;
     const aMax = 200;
     const mMin = 0;
-    const mMax = 8;
+    const mMax = 6;     // escala hasta magnitud 6, calibrada con ~350 km
 
     const svgHeight = 420;
     const topMargin = 30;
@@ -86,25 +86,20 @@
       return topMargin + (1 - t) * axisHeight;
     }
 
-// Magnitud calibrada para que M0 ↔ 5 km  y M6 ↔ 350 km
-function yFromMag(M) {
+    // Escala de magnitud calibrada:
+    // M = 0 ↔ 5 km,  M = 6 ↔ 350 km (aprox)
+    function yFromMag(M) {
+      const logD0 = Math.log10(5);      // magnitud 0
+      const logD6 = Math.log10(350);    // magnitud 6
+      const slope = (logD6 - logD0) / 6.0;
+      const logDM = logD0 + slope * M;
 
-  // log10 de los puntos de referencia
-  const logD0 = Math.log10(5);      // magnitud 0
-  const logD6 = Math.log10(350);    // magnitud 6
+      const logMin = Math.log10(dMin);
+      const logMax = Math.log10(dMax);
+      const t = (logDM - logMin) / (logMax - logMin);
 
-  // pendiente log-distancia por grado de magnitud
-  const slope = (logD6 - logD0) / 6;
-
-  // log-distancia correspondiente a esta magnitud
-  const logDM = logD0 + slope * M;
-
-  // Convertimos a posición vertical (comparando contra eje logarítmico real)
-  const t = (logDM - Math.log10(dMin)) / (Math.log10(dMax) - Math.log10(dMin));
-
-  return topMargin + (1 - t) * axisHeight;
-}
-
+      return topMargin + (1 - t) * axisHeight;
+    }
 
     function drawAxes() {
       const axes = document.getElementById("axes");
@@ -140,16 +135,16 @@ function yFromMag(M) {
       textEl(xMag,  18, "MAGNITUD");
       textEl(xAmp,  18, "AMPLITUD (mm)");
 
-      // Ticks distancia (log)
-      [0,5,10,20,30,50,100,200,300,500].forEach(v => {
+      // Ticks distancia (log) empezando en 5 km
+      [5,10,20,30,50,100,200,300,500].forEach(v => {
         const y = yFromLog(v, dMin, dMax);
         line(xDist-4, y, xDist+4, y, "axis-line");
         textEl(xDist-8, y+3, v, "end", "tick-label");
       });
 
-      // Ticks magnitud (lineal)
+      // Ticks magnitud (calibrados)
       for (let m = mMin; m <= mMax; m++) {
-        const y = yFromLinear(m, mMin, mMax);
+        const y = yFromMag(m);
         line(xMag-4, y, xMag+4, y, "axis-line");
         textEl(xMag+8, y+3, m, "start", "tick-label");
       }
@@ -204,55 +199,3 @@ function yFromMag(M) {
       const ns = "http://www.w3.org/2000/svg";
 
       function el(type, attrs) {
-        const e = document.createElementNS(ns, type);
-        for (const k in attrs) e.setAttribute(k, attrs[k]);
-        plot.appendChild(e);
-      }
-
-      const yD = yFromLog(dist, dMin, dMax);
-      const yA = yFromLog(ampVal, aMin, aMax);
-      const yM = yFromMag(ML);
-
-      // Línea distancia–amplitud
-      el("line", { x1:xDist, y1:yD, x2:xAmp, y2:yA, class:"mag-line" });
-      // Guía horizontal en magnitud
-      el("line", { x1:xDist, y1:yM, x2:xAmp, y2:yM, class:"guide-line" });
-      // Punto en eje de magnitud
-      el("circle", { cx:xMag, cy:yM, r:4, class:"point" });
-    }
-
-    // Registrar service worker para PWA
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("sw.js").catch(() => {});
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", drawAxes);
-  </script>
-
-  <!-- Modal para zoom de imágenes -->
-  <div id="imgModal"
-       style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%;
-              background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
-    <img id="modalImg" src="" style="max-width:90%; max-height:90%; border-radius:12px;">
-  </div>
-
-  <script>
-    // Zoom en las imágenes de sismogramas
-    document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll("img").forEach(img => {
-        img.style.cursor = "zoom-in";
-        img.addEventListener("click", () => {
-          document.getElementById("modalImg").src = img.src;
-          document.getElementById("imgModal").style.display = "flex";
-        });
-      });
-
-      document.getElementById("imgModal").addEventListener("click", () => {
-        document.getElementById("imgModal").style.display = "none";
-      });
-    });
-  </script>
-</body>
-</html>
