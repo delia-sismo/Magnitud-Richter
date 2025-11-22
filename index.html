@@ -11,7 +11,9 @@
     .card { background: white; padding: 20px; border-radius: 16px; max-width: 430px; margin: 20px auto; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
     h2 { margin-top: 0; color: #004b6b; text-align: center; }
     label { display: block; margin-top: 12px; font-weight: bold; font-size: 14px; }
-    input { width: 100%; padding: 8px 10px; margin-top: 4px; border-radius: 8px; border: 1px solid #ccd3da; box-sizing: border-box; }
+    input[type="number"] { width: 100%; padding: 8px 10px; margin-top: 4px; border-radius: 8px; border: 1px solid #ccd3da; box-sizing: border-box; }
+    input[type="range"] { width: 100%; margin-top: 6px; }
+    .slider-label { font-size: 12px; color: #444; margin-top: 2px; }
     button { margin-top: 18px; width: 100%; padding: 12px; background: #004b6b; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
     button:hover { background: #003c57; }
     .resultado { margin-top: 14px; font-size: 18px; font-weight: bold; text-align: center; color: #222; }
@@ -23,12 +25,16 @@
     .guide-line { stroke: #999; stroke-width: 0.5; stroke-dasharray: 3 3; }
     .mag-line { stroke: #c62828; stroke-width: 2; }
     .point { fill: #c62828; }
+    figure.sismo { margin-top: 15px; border-radius: 12px; border: 1px solid #ccc; overflow: hidden; background: #fff; }
+    figure.sismo img { width: 100%; display: block; }
+    figure.sismo figcaption { font-size: 12px; text-align: center; color: #333; padding: 4px 6px 6px; }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>Calculadora de Magnitud (ML)</h2>
 
+    <!-- Entradas numéricas -->
     <label for="p">Tiempo de arribo P (s)</label>
     <input type="number" id="p" step="0.01" />
 
@@ -38,10 +44,19 @@
     <label for="amp">Amplitud máxima (mm)</label>
     <input type="number" id="amp" step="0.01" />
 
+    <!-- Controles tipo slider para jugar con el nomograma -->
+    <label for="sp_slider">Tiempo S–P (s) (control deslizante)</label>
+    <input type="range" id="sp_slider" min="1" max="70" step="1" value="10" oninput="actualizarDesdeSliders()" />
+    <div class="slider-label">S–P actual: <span id="sp_label">10</span> s</div>
+
+    <label for="amp_slider">Amplitud (mm) (control deslizante)</label>
+    <input type="range" id="amp_slider" min="1" max="200" step="1" value="50" oninput="actualizarDesdeSliders()" />
+    <div class="slider-label">Amplitud actual: <span id="amp_slider_label">50</span> mm</div>
+
     <button onclick="calcularML()">Calcular magnitud y trazar recta</button>
 
     <div class="resultado" id="resultado"></div>
-    <div class="nota">Se usa una escala tipo Richter basada en la intersección de la recta distancia–amplitud.</div>
+    <div class="nota">La magnitud se obtiene de la intersección de la recta distancia–amplitud con el eje central.</div>
 
     <!-- Nomograma -->
     <svg id="nomograma" viewBox="0 0 320 420">
@@ -53,12 +68,22 @@
     <h3 style="text-align:center; color:#004b6b; margin-top:25px;">Sismogramas</h3>
     <p style="font-size:12px; text-align:center; color:#444; margin-top:0;">Lecturas para el ejercicio</p>
 
-    <img src="ARIG.jpg" alt="Sismograma ARIG"
-         style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
-    <img src="CMIG.jpg" alt="Sismograma CMIG"
-         style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
-    <img src="MOIG.jpg" alt="Sismograma MOIG"
-         style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <figure class="sismo">
+      <img src="ARIG.jpg" alt="Sismograma ARIG">
+      <figcaption>Estación ARIG</figcaption>
+    </figure>
+
+    <figure class="sismo">
+      <img src="CMIG.jpg" alt="Sismograma CMIG">
+      <figcaption>Estación CMIG</figcaption>
+    </figure>
+
+    <figure class="sismo">
+      <img src="MOIG.jpg" alt="Sismograma MOIG">
+      <figcaption>Estación MOIG</figcaption>
+    </figure>
+
+    <!-- Para añadir más estaciones, copia y pega otro <figure class="sismo"> cambiando src y figcaption -->
   </div>
 
   <script>
@@ -136,7 +161,7 @@
         axes.appendChild(el);
       }
 
-      // Ejes
+      // Ejes principales
       line(xDist, topMargin, xDist, topMargin+axisHeight, "axis-line");
       line(xMag,  topMargin, xMag,  topMargin+axisHeight, "axis-line");
       line(xAmp,  topMargin, xAmp,  topMargin+axisHeight, "axis-line");
@@ -145,12 +170,23 @@
       textEl(xMag,  18, "MAGNITUD");
       textEl(xAmp,  18, "AMPLITUD (mm)");
 
-      // Ticks distancia (log) empezando en 5 km
-      [5,10,20,30,50,100,200,300,500].forEach(v => {
-        const y = yFromLog(v, dMin, dMax);
-        line(xDist-4, y, xDist+4, y, "axis-line");
-        textEl(xDist-8, y+3, v, "end", "tick-label");
+      // Ticks distancia (log) y escala S–P
+      const distTicks = [5,10,20,30,50,100,200,300,500];
+      distTicks.forEach(d => {
+        const y = yFromLog(d, dMin, dMax);
+        // ticks y etiquetas de distancia (izquierda)
+        line(xDist-4, y, xDist+0, y, "axis-line");
+        textEl(xDist-8, y+3, d, "end", "tick-label");
+
+        // ticks y etiquetas de S–P (derecha del eje de distancia)
+        const sp = d / 8.0;
+        const spText = sp < 10 ? sp.toFixed(1) : Math.round(sp).toString();
+        line(xDist, y, xDist+4, y, "axis-line");
+        textEl(xDist+8, y+3, spText, "start", "tick-label");
       });
+
+      // Etiqueta S–P (s) bajo el eje de distancia
+      textEl(xDist+12, topMargin+axisHeight+20, "S–P (s)", "middle", "axis-label");
 
       // Ticks magnitud (calibrados)
       for (let m = mMin; m <= mMax; m++) {
@@ -174,7 +210,7 @@
       const resultado = document.getElementById("resultado");
 
       if (isNaN(tP) || isNaN(tS) || isNaN(A)) {
-        resultado.textContent = "Completa todos los campos.";
+        resultado.textContent = "Completa todos los campos o usa los sliders.";
         limpiar();
         return;
       }
@@ -193,9 +229,24 @@
         return;
       }
 
-      // Aquí NO usamos fórmula analítica, sino la intersección gráfica
       const ML = trazar(dist, A);
       resultado.textContent = `Magnitud estimada: ${ML.toFixed(2)}`;
+    }
+
+    // Actualizar desde sliders S–P y Amplitud
+    function actualizarDesdeSliders() {
+      const sp = parseFloat(document.getElementById("sp_slider").value);
+      const ampSl = parseFloat(document.getElementById("amp_slider").value);
+
+      document.getElementById("sp_label").textContent = sp.toFixed(0);
+      document.getElementById("amp_slider_label").textContent = ampSl.toFixed(0);
+
+      // Para que tenga sentido: fijamos P = 0, S = S–P
+      document.getElementById("p").value = 0;
+      document.getElementById("s").value = sp;
+      document.getElementById("amp").value = ampSl;
+
+      calcularML();
     }
 
     function limpiar() {
@@ -216,16 +267,14 @@
       const yD = yFromLog(dist, dMin, dMax);
       const yA = yFromLog(ampVal, aMin, aMax);
 
-      // y en el eje de magnitud donde cruza la recta
+      // Intersección de la recta con el eje de magnitud
       const tLine = (xMag - xDist) / (xAmp - xDist);
       const yCross = yD + tLine * (yA - yD);
-
-      // Magnitud a partir de esa posición vertical
       const ML = magFromY(yCross);
 
       // Línea distancia–amplitud
       el("line", { x1:xDist, y1:yD, x2:xAmp, y2:yA, class:"mag-line" });
-      // Guía horizontal en magnitud (coincide con la recta)
+      // Guía horizontal en magnitud
       el("line", { x1:xDist, y1:yCross, x2:xAmp, y2:yCross, class:"guide-line" });
       // Punto en eje de magnitud
       el("circle", { cx:xMag, cy:yCross, r:4, class:"point" });
@@ -233,14 +282,18 @@
       return ML;
     }
 
-    // Registrar service worker para PWA
+    // Registrar service worker para PWA (si lo usas)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("sw.js").catch(() => {});
       });
     }
 
-    document.addEventListener("DOMContentLoaded", drawAxes);
+    document.addEventListener("DOMContentLoaded", () => {
+      drawAxes();
+      // inicializar sliders con cálculo
+      actualizarDesdeSliders();
+    });
   </script>
 
   <!-- Modal para zoom de imágenes -->
@@ -253,7 +306,7 @@
   <script>
     // Zoom en las imágenes de sismogramas
     document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll("img").forEach(img => {
+      document.querySelectorAll("figure.sismo img").forEach(img => {
         img.style.cursor = "zoom-in";
         img.addEventListener("click", () => {
           document.getElementById("modalImg").src = img.src;
