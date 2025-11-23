@@ -3,830 +3,268 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Magnitud y Localización de un sismo</title>
-
-  <!-- Leaflet para el mapa -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-
+  <meta name="theme-color" content="#004b6b" />
+  <title>Calculadora de Magnitud Sísmica</title>
+  <link rel="manifest" href="manifest.json" />
   <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f0f4f7;
-    }
-    .app-container {
-      max-width: 540px;
-      margin: 16px auto;
-      padding: 0 8px 10px;
-    }
-    .card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
-    }
-    h1 {
-      margin: 0 0 8px;
-      text-align: center;
-      color: #004b6b;
-      font-size: 1.4rem;
-    }
-    p.desc {
-      margin: 0 0 12px;
-      font-size: 0.9rem;
-      text-align: center;
-      color: #444;
-    }
-
-    /* Pestañas */
-    .tab-bar {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 8px;
-      gap: 8px;
-    }
-    .tab-button {
-      flex: 1;
-      border-radius: 999px;
-      border: 1px solid #2563eb;
-      background: #e0ecff;
-      color: #2563eb;
-      font-size: 0.9rem;
-      padding: 6px 10px;
-      cursor: pointer;
-    }
-    .tab-button.active {
-      background: #2563eb;
-      color: #fff;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-
-    /* Inputs genéricos */
-    label {
-      font-size: 0.85rem;
-      color: #333;
-    }
-    input[type="number"],
-    input[type="text"] {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid #ccd3da;
-      font-size: 0.9rem;
-      box-sizing: border-box;
-    }
-    button.primary {
-      width: 100%;
-      margin-top: 10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: none;
-      background: #004b6b;
-      color: #fff;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    button.primary:hover {
-      background: #00344b;
-    }
-    .result-text {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 1rem;
-      color: #222;
-      font-weight: 600;
-    }
-    .subnote {
-      text-align: center;
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 4px;
-    }
-
-    /* Sección Magnitud */
-    .input-row {
-      margin-bottom: 8px;
-    }
-    #nomograma {
-      width: 100%;
-      max-width: 420px;
-      height: 260px;
-      display: block;
-      margin: 12px auto 0;
-      border-radius: 12px;
-      border: 1px solid #dde3ea;
-      background: #fafbff;
-    }
-    .mini-title {
-      text-align: center;
-      margin-top: 14px;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: #004b6b;
-      font-size: 0.95rem;
-    }
-    .help {
-      font-size: 0.8rem;
-      color: #555;
-      margin-top: 4px;
-      text-align: center;
-    }
-    figure.sismo {
-      margin: 10px 0 0;
-      border-radius: 12px;
-      border: 1px solid #ccd3da;
-      overflow: hidden;
-      background: #fff;
-    }
-    figure.sismo img {
-      width: 100%;
-      display: block;
-      cursor: zoom-in;
-    }
-    figure.sismo figcaption {
-      font-size: 0.8rem;
-      text-align: center;
-      color: #333;
-      padding: 4px 6px 6px;
-      background: #f7f9fb;
-    }
-    #imgModal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    #imgModal img {
-      max-width: 95%;
-      max-height: 95%;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-    }
-
-    /* Sección Localización */
-    .toolbar {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 8px;
-    }
-    .toolbar button {
-      border-radius: 999px;
-      border: 1px solid #2563eb;
-      background: #2563eb;
-      color: #fff;
-      font-size: 0.9rem;
-      padding: 6px 14px;
-      cursor: pointer;
-    }
-    .toolbar button:hover {
-      background: #1d4ed8;
-    }
-    .slot {
-      border-top: 1px solid #e1e5ea;
-      padding-top: 8px;
-      margin-top: 8px;
-    }
-    .slot-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      margin-bottom: 4px;
-    }
-    .btn-remove-slot {
-      background: transparent;
-      border: none;
-      color: #c62828;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0 6px;
-    }
-    .btn-remove-slot:hover {
-      color: #8e0000;
-    }
-    .color-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 6px;
-      flex-shrink: 0;
-    }
-    .slot-title {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 600;
-      color: #004b6b;
-    }
-    .slot-grid {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1.1fr;
-      gap: 8px;
-      align-items: center;
-    }
-    .dist {
-      font-size: 0.82rem;
-      color: #333;
-      text-align: center;
-    }
-    .dist span.value {
-      font-weight: 600;
-      color: #111;
-      min-width: 60px;
-      display: inline-block;
-    }
-    select {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid #ccd3da;
-      font-size: 0.85rem;
-      box-sizing: border-box;
-    }
-    #mapLocalizacion {
-      width: 100%;
-      height: 340px;
-      border-radius: 12px;
-      border: 1px solid #dde3ea;
-      margin-top: 12px;
-    }
-    .station-tooltip {
-      background: rgba(0,0,0,0.8);
-      color: #fff;
-      border-radius: 4px;
-      padding: 2px 4px;
-      font-size: 11px;
-      border: none;
-    }
-    .epic-info {
-      margin-top: 6px;
-      font-size: 0.82rem;
-      color: #333;
-      text-align: center;
-    }
-    .epic-info .value {
-      font-weight: 600;
-      color: #111;
-      min-width: 80px;
-      display: inline-block;
-    }
-
-    /* Footer */
-    footer {
-      text-align: center;
-      color: #004b6b;
-      font-size: 0.85rem;
-      padding: 10px 0 16px;
-    }
-    footer img {
-      width: 160px;
-      height: auto;
-      margin-bottom: 6px;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f4f7; }
+    .card { background: white; padding: 20px; border-radius: 16px; max-width: 430px; margin: 20px auto; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+    h2 { margin-top: 0; color: #004b6b; text-align: center; }
+    label { display: block; margin-top: 12px; font-weight: bold; font-size: 14px; }
+    input { width: 100%; padding: 8px 10px; margin-top: 4px; border-radius: 8px; border: 1px solid #ccd3da; box-sizing: border-box; }
+    button { margin-top: 18px; width: 100%; padding: 12px; background: #004b6b; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #003c57; }
+    .resultado { margin-top: 14px; font-size: 18px; font-weight: bold; text-align: center; color: #222; }
+    .nota { margin-top: 8px; font-size: 12px; color: #555; text-align: center; }
+    svg { width: 100%; height: 420px; margin-top: 18px; background: #f8fafc; border-radius: 12px; border: 1px solid #dde3ea; }
+    .axis-label { font-size: 11px; fill: #222; }
+    .tick-label { font-size: 9px; fill: #444; }
+    .axis-line { stroke: #555; stroke-width: 1; }
+    .guide-line { stroke: #999; stroke-width: 0.5; stroke-dasharray: 3 3; }
+    .mag-line { stroke: #c62828; stroke-width: 2; }
+    .point { fill: #c62828; }
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <div class="tab-bar">
-      <button class="tab-button active" data-tab="magnitud">Magnitud (ML)</button>
-      <button class="tab-button" data-tab="localizacion">Localización (S–P)</button>
-    </div>
+  <div class="card">
+    <h2>Calculadora de Magnitud (ML)</h2>
 
-    <!-- CONTENEDOR GENERAL -->
-    <div class="card">
+    <label for="p">Tiempo de arribo P (s)</label>
+    <input type="number" id="p" step="0.01" />
 
-      <!-- TAB MAGNITUD -->
-      <section id="tab-magnitud" class="tab-content active">
-        <h1>Calculadora de Magnitud (ML)</h1>
-        <p class="desc">
-          Ingresa los tiempos de arribo de P y S, y la amplitud máxima en el sismograma.
-          El nomograma muestra la recta distancia–amplitud y su intersección con la escala de magnitud.
-        </p>
+    <label for="s">Tiempo de arribo S (s)</label>
+    <input type="number" id="s" step="0.01" />
 
-        <div class="input-row">
-          <label for="pTime">Tiempo de arribo P (s)</label>
-          <input type="number" id="pTime" step="0.1">
-        </div>
-        <div class="input-row">
-          <label for="sTime">Tiempo de arribo S (s)</label>
-          <input type="number" id="sTime" step="0.1">
-        </div>
-        <div class="input-row">
-          <label for="amplitude">Amplitud máxima (mm)</label>
-          <input type="number" id="amplitude" step="0.1">
-        </div>
+    <label for="amp">Amplitud máxima (mm)</label>
+    <input type="number" id="amp" step="0.01" />
 
-        <button class="primary" id="btnCalcularMagnitud">
-          Calcular magnitud y trazar recta
-        </button>
+    <button onclick="calcularML()">Calcular magnitud y trazar recta</button>
 
-        <div class="result-text" id="resultadoML">
-          Magnitud estimada: —
-        </div>
-        <div class="subnote">
-          Se usa un nomograma de tipo Richter con distancia ≈ (S–P) × 8 km.
-        </div>
+    <div class="resultado" id="resultado"></div>
+    <div class="nota">Se usa una escala tipo Richter basada en la intersección de la recta distancia–amplitud.</div>
 
-        <canvas id="nomograma"></canvas>
+    <!-- Nomograma -->
+    <svg id="nomograma" viewBox="0 0 320 420">
+      <g id="axes"></g>
+      <g id="plot"></g>
+    </svg>
 
-        <div class="mini-title">Sismogramas de ejemplo</div>
-        <p class="help">Toca la imagen para hacer zoom.</p>
+    <!-- Sismogramas -->
+    <h3 style="text-align:center; color:#004b6b; margin-top:25px;">Sismogramas</h3>
+    <p style="font-size:12px; text-align:center; color:#444; margin-top:0;">Lecturas para el ejercicio</p>
 
-        <figure class="sismo">
-          <img src="ARIG.jpg" alt="Sismograma ARIG">
-          <figcaption>Estación ARIG</figcaption>
-        </figure>
-        <figure class="sismo">
-          <img src="CJIG.jpg" alt="Sismograma CJIG">
-          <figcaption>Estación CJIG</figcaption>
-        </figure>
-        <figure class="sismo">
-          <img src="MOIG.jpg" alt="Sismograma MOIG">
-          <figcaption>Estación MOIG</figcaption>
-        </figure>
-      </section>
-
-      <!-- TAB LOCALIZACIÓN -->
-      <section id="tab-localizacion" class="tab-content">
-        <h1>Localización con tiempos S–P</h1>
-        <p class="desc">
-          Agrega estaciones, escribe el valor de <strong>S–P</strong> y se dibuja un círculo
-          de distancia aproximada (<em>S–P</em> × 8 km) alrededor de cada estación.
-          Marca el epicentro haciendo clic en el mapa.
-        </p>
-
-        <div class="toolbar">
-          <button id="btnAddSlot">➕ Agregar estación</button>
-        </div>
-
-        <div id="slots"></div>
-
-        <div id="mapLocalizacion"></div>
-
-        <div class="epic-info">
-          Punto marcado en el mapa:<br>
-          Latitud: <span id="epicLat" class="value">—</span>°
-          &nbsp;|&nbsp;
-          Longitud: <span id="epicLon" class="value">—</span>°
-        </div>
-      </section>
-    </div>
+    <img src="ARIG.jpg" alt="Sismograma ARIG"
+         style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="CMIG.jpg" alt="Sismograma CMIG"
+         style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="MOIG.jpg" alt="Sismograma MOIG"
+         style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
   </div>
-
-  <!-- Modal para zoom de imágenes -->
-  <div id="imgModal">
-    <img id="modalImg" src="" alt="Zoom sismograma">
-  </div>
-
-  <!-- PIE DE PÁGINA CON LOGO DEL SSN -->
-  <footer>
-    <img src="SSN.png" alt="Logo del Servicio Sismológico Nacional">
-    <br>
-    Aplicación educativa – Servicio Sismológico Nacional
-  </footer>
 
   <script>
-    /* ---------------- PESTAÑAS ----------------- */
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = {
-      magnitud: document.getElementById('tab-magnitud'),
-      localizacion: document.getElementById('tab-localizacion')
-    };
+    // Parámetros del nomograma
+    const dMin = 5;     // 0 de magnitud alineado con 5 km
+    const dMax = 600;
+    const aMin = 0.1;
+    const aMax = 200;
+    const mMin = 0;
+    const mMax = 6;     // eje central marcado 0–6
 
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    const svgHeight = 420;
+    const topMargin = 30;
+    const bottomMargin = 40;
+    const axisHeight = svgHeight - topMargin - bottomMargin;
 
-        const tab = btn.dataset.tab;
-        Object.keys(tabContents).forEach(k => {
-          tabContents[k].classList.toggle('active', k === tab);
-        });
-      });
-    });
+    const xDist = 50;
+    const xMag  = 160;
+    const xAmp  = 270;
 
-    /* ---------------- NOMOGRAMA ML ----------------- */
-    const canvas = document.getElementById('nomograma');
-    const ctx = canvas.getContext('2d');
+    // Constantes para la calibración magnitud–distancia:
+    // M = 0 ↔ 5 km,  M = 6 ↔ 350 km
+    const logD0 = Math.log10(5);
+    const logD6 = Math.log10(350);
+    const slopeMag = (logD6 - logD0) / 6.0;
 
-    function resizeCanvas() {
-      const width = canvas.clientWidth || 360;
-      canvas.width = width;
-      canvas.height = 260;
-      drawNomogramaBase();
+    function yFromLog(value, vMin, vMax) {
+      const logMin = Math.log10(vMin);
+      const logMax = Math.log10(vMax);
+      const t = (Math.log10(value) - logMin) / (logMax - logMin);
+      return topMargin + (1 - t) * axisHeight;
     }
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    const leftX = 60;
-    const centerX = 0.5;   // relativo, se ajustará en draw()
-    const rightX = 300;
-    const topY = 30;
-    const bottomY = 230;
-
-    function mapDistY(R) {
-      const minR = 5, maxR = 500;
-      R = Math.max(minR, Math.min(maxR, R));
-      const t = (Math.log10(R) - Math.log10(minR)) / (Math.log10(maxR) - Math.log10(minR));
-      return topY + (1 - t) * (bottomY - topY);
-    }
-    function mapAmpY(A) {
-      const minA = 0.1, maxA = 200;
-      A = Math.max(minA, Math.min(maxA, A));
-      const t = (Math.log10(A) - Math.log10(minA)) / (Math.log10(maxA) - Math.log10(minA));
-      return topY + (1 - t) * (bottomY - topY);
-    }
-    function mapMagY(M) {
-      const minM = 0, maxM = 7;
-      M = Math.max(minM, Math.min(maxM, M));
-      const t = (M - minM) / (maxM - minM);
-      return topY + (1 - t) * (bottomY - topY);
-    }
-    function mapYtoMag(y) {
-      const minM = 0, maxM = 7;
-      const t = (bottomY - y) / (bottomY - topY);
-      return minM + t * (maxM - minM);
+    // De magnitud a posición vertical (y)
+    function yFromMag(M) {
+      const logDM = logD0 + slopeMag * M; // log10(distancia equivalente)
+      const logMin = Math.log10(dMin);
+      const logMax = Math.log10(dMax);
+      const t = (logDM - logMin) / (logMax - logMin);
+      return topMargin + (1 - t) * axisHeight;
     }
 
-    function drawNomogramaBase() {
-      const w = canvas.width;
-      const lX = leftX;
-      const rX = w - 60;
-      const cX = (lX + rX) / 2;
+    // Inversa: de y a magnitud (para leer la intersección de la recta)
+    function magFromY(y) {
+      const logMin = Math.log10(dMin);
+      const logMax = Math.log10(dMax);
+      const t = ( (topMargin + axisHeight) - y ) / axisHeight;
+      const logDM = logMin + t * (logMax - logMin);
+      const M = (logDM - logD0) / slopeMag;
+      return M;
+    }
 
-      canvas.dataset.leftX = lX;
-      canvas.dataset.rightX = rX;
-      canvas.dataset.centerX = cX;
+    function drawAxes() {
+      const axes = document.getElementById("axes");
+      axes.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
 
-      ctx.clearRect(0, 0, w, canvas.height);
-      ctx.font = '10px system-ui';
-      ctx.fillStyle = '#333';
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 1;
+      function line(x1, y1, x2, y2, cls) {
+        const el = document.createElementNS(ns, "line");
+        el.setAttribute("x1", x1);
+        el.setAttribute("y1", y1);
+        el.setAttribute("x2", x2);
+        el.setAttribute("y2", y2);
+        el.setAttribute("class", cls);
+        axes.appendChild(el);
+      }
+
+      function textEl(x, y, txt, anchor="middle", cls="axis-label") {
+        const el = document.createElementNS(ns, "text");
+        el.setAttribute("x", x);
+        el.setAttribute("y", y);
+        el.setAttribute("text-anchor", anchor);
+        el.setAttribute("class", cls);
+        el.textContent = txt;
+        axes.appendChild(el);
+      }
 
       // Ejes
-      ctx.beginPath();
-      ctx.moveTo(lX, topY); ctx.lineTo(lX, bottomY);
-      ctx.moveTo(cX, topY); ctx.lineTo(cX, bottomY);
-      ctx.moveTo(rX, topY); ctx.lineTo(rX, bottomY);
-      ctx.stroke();
+      line(xDist, topMargin, xDist, topMargin+axisHeight, "axis-line");
+      line(xMag,  topMargin, xMag,  topMargin+axisHeight, "axis-line");
+      line(xAmp,  topMargin, xAmp,  topMargin+axisHeight, "axis-line");
 
-      // Ticks de distancia
-      const distTicks = [5,10,20,50,100,200,500];
-      distTicks.forEach(R => {
-        const y = mapDistY(R);
-        ctx.beginPath();
-        ctx.moveTo(lX - 4, y);
-        ctx.lineTo(lX + 4, y);
-        ctx.stroke();
-        ctx.fillText(R.toString(), lX - 30, y + 3);
+      textEl(xDist, 18, "DISTANCIA (km)");
+      textEl(xMag,  18, "MAGNITUD");
+      textEl(xAmp,  18, "AMPLITUD (mm)");
+
+      // Ticks distancia (log) empezando en 5 km
+      [5,10,20,30,50,100,200,300,500].forEach(v => {
+        const y = yFromLog(v, dMin, dMax);
+        line(xDist-4, y, xDist+4, y, "axis-line");
+        textEl(xDist-8, y+3, v, "end", "tick-label");
       });
-      ctx.save();
-      ctx.translate(lX - 40, (topY + bottomY)/2);
-      ctx.rotate(-Math.PI/2);
-      ctx.fillText('DISTANCIA (km)', 0, 0);
-      ctx.restore();
 
-      // Ticks de magnitud
-      for (let M = 0; M <= 7; M++) {
-        const y = mapMagY(M);
-        ctx.beginPath();
-        ctx.moveTo(cX - 4, y);
-        ctx.lineTo(cX + 4, y);
-        ctx.stroke();
-        ctx.fillText(M.toString(), cX - 12, y + 3);
+      // Ticks magnitud (calibrados)
+      for (let m = mMin; m <= mMax; m++) {
+        const y = yFromMag(m);
+        line(xMag-4, y, xMag+4, y, "axis-line");
+        textEl(xMag+8, y+3, m, "start", "tick-label");
       }
-      ctx.save();
-      ctx.translate(cX, topY - 14);
-      ctx.fillText('MAGNITUD', -20, 0);
-      ctx.restore();
 
-      // Ticks de amplitud
-      const ampTicks = [0.1,0.2,0.5,1,2,5,10,20,50,100,200];
-      ampTicks.forEach(A => {
-        const y = mapAmpY(A);
-        ctx.beginPath();
-        ctx.moveTo(rX - 4, y);
-        ctx.lineTo(rX + 4, y);
-        ctx.stroke();
-        ctx.fillText(A.toString(), rX + 6, y + 3);
+      // Ticks amplitud (log)
+      [0.1,0.2,0.5,1,2,5,10,20,50,100,200].forEach(v => {
+        const y = yFromLog(v, aMin, aMax);
+        line(xAmp-4, y, xAmp+4, y, "axis-line");
+        textEl(xAmp+8, y+3, v, "start", "tick-label");
       });
-      ctx.save();
-      ctx.translate(rX + 30, (topY + bottomY)/2);
-      ctx.rotate(-Math.PI/2);
-      ctx.fillText('AMPLITUD (mm)', 0, 0);
-      ctx.restore();
     }
 
-    function trazarMagnitud() {
-      const p = parseFloat(document.getElementById('pTime').value);
-      const s = parseFloat(document.getElementById('sTime').value);
-      const A = parseFloat(document.getElementById('amplitude').value);
-      const salida = document.getElementById('resultadoML');
+    function calcularML() {
+      const tP = parseFloat(document.getElementById("p").value);
+      const tS = parseFloat(document.getElementById("s").value);
+      const A  = parseFloat(document.getElementById("amp").value);
+      const resultado = document.getElementById("resultado");
 
-      if (!isFinite(p) || !isFinite(s) || !isFinite(A) || s <= p || A <= 0) {
-        salida.textContent = 'Magnitud estimada: —';
-        drawNomogramaBase();
+      if (isNaN(tP) || isNaN(tS) || isNaN(A)) {
+        resultado.textContent = "Completa todos los campos.";
+        limpiar();
         return;
       }
 
-      const sp = s - p;
-      const R = sp * 8;  // distancia aproximada
+      const SP = tS - tP;
+      if (SP <= 0) {
+        resultado.textContent = "S debe ser mayor que P.";
+        limpiar();
+        return;
+      }
 
-      drawNomogramaBase();
+      const dist = SP * 8; // km
+      if (dist < dMin || dist > dMax || A < aMin || A > aMax) {
+        resultado.textContent = "Valores fuera del rango del nomograma.";
+        limpiar();
+        return;
+      }
 
-      const lX = parseFloat(canvas.dataset.leftX);
-      const rX = parseFloat(canvas.dataset.rightX);
-      const cX = parseFloat(canvas.dataset.centerX);
-
-      const yDist = mapDistY(R);
-      const yAmp  = mapAmpY(A);
-
-      // Recta
-      ctx.strokeStyle = '#c62828';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(lX, yDist);
-      ctx.lineTo(rX, yAmp);
-      ctx.stroke();
-
-      // Intersección con el eje de magnitud
-      const t = (cX - lX) / (rX - lX);
-      const yMid = yDist + t * (yAmp - yDist);
-      const ML = mapYtoMag(yMid);
-
-      ctx.fillStyle = '#c62828';
-      ctx.beginPath();
-      ctx.arc(cX, yMid, 3, 0, 2 * Math.PI);
-      ctx.fill();
-
-      salida.textContent = `Magnitud estimada: ${ML.toFixed(2)} (S–P ≈ ${sp.toFixed(1)} s, R ≈ ${R.toFixed(0)} km)`;
+      // Aquí NO usamos fórmula analítica, sino la intersección gráfica
+      const ML = trazar(dist, A);
+      resultado.textContent = `Magnitud estimada: ${ML.toFixed(2)}`;
     }
 
-    document.getElementById('btnCalcularMagnitud')
-            .addEventListener('click', trazarMagnitud);
+    function limpiar() {
+      document.getElementById("plot").innerHTML = "";
+    }
 
-    /* --------------- Zoom de imágenes ---------------- */
-    document.addEventListener('DOMContentLoaded', () => {
-      const modal = document.getElementById('imgModal');
-      const modalImg = document.getElementById('modalImg');
-      document.querySelectorAll('figure.sismo img').forEach(img => {
-        img.addEventListener('click', () => {
-          modalImg.src = img.src;
-          modal.style.display = 'flex';
+    function trazar(dist, ampVal) {
+      const plot = document.getElementById("plot");
+      plot.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
+
+      function el(type, attrs) {
+        const e = document.createElementNS(ns, type);
+        for (const k in attrs) e.setAttribute(k, attrs[k]);
+        plot.appendChild(e);
+      }
+
+      const yD = yFromLog(dist, dMin, dMax);
+      const yA = yFromLog(ampVal, aMin, aMax);
+
+      // y en el eje de magnitud donde cruza la recta
+      const tLine = (xMag - xDist) / (xAmp - xDist);
+      const yCross = yD + tLine * (yA - yD);
+
+      // Magnitud a partir de esa posición vertical
+      const ML = magFromY(yCross);
+
+      // Línea distancia–amplitud
+      el("line", { x1:xDist, y1:yD, x2:xAmp, y2:yA, class:"mag-line" });
+      // Guía horizontal en magnitud (coincide con la recta)
+      el("line", { x1:xDist, y1:yCross, x2:xAmp, y2:yCross, class:"guide-line" });
+      // Punto en eje de magnitud
+      el("circle", { cx:xMag, cy:yCross, r:4, class:"point" });
+
+      return ML;
+    }
+
+    // Registrar service worker para PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", drawAxes);
+  </script>
+
+  <!-- Modal para zoom de imágenes -->
+  <div id="imgModal"
+       style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%;
+              background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
+    <img id="modalImg" src="" style="max-width:90%; max-height:90%; border-radius:12px;">
+  </div>
+
+  <script>
+    // Zoom en las imágenes de sismogramas
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("img").forEach(img => {
+        img.style.cursor = "zoom-in";
+        img.addEventListener("click", () => {
+          document.getElementById("modalImg").src = img.src;
+          document.getElementById("imgModal").style.display = "flex";
         });
       });
-      modal.addEventListener('click', () => {
-        modal.style.display = 'none';
-        modalImg.src = '';
+
+      document.getElementById("imgModal").addEventListener("click", () => {
+        document.getElementById("imgModal").style.display = "none";
       });
     });
-
-    /* --------------- LOCALIZACIÓN S–P ---------------- */
-
-    const stationData = {
-      AAIG:{lat:21.9684567, lon:-102.3802},
-      ACIG:{lat:19.984542, lon:-99.88239},
-      ANIG:{lat:21.053822, lon:-104.520706},
-      ARIG:{lat:18.280492, lon:-100.347494},
-      BCIG:{lat:27.544763, lon:-105.412656},
-      CAIG:{lat:17.048585, lon:-100.267253},
-      CCIG:{lat:16.2818, lon:-92.1368},
-      CGIG:{lat:30.365044, lon:-107.977352},
-      CJIG:{lat:19.49943, lon:-105.043867},
-      CMIG:{lat:17.091, lon:-94.8838},
-      CRIG:{lat:16.736338, lon:-99.131171},
-      CSIG:{lat:26.836, lon:-108.371},
-      DAIG:{lat:17.021305, lon:-99.650691},
-      DHIG:{lat:20.3003, lon:-99.035468},
-      FTIG:{lat:17.907928, lon:-98.132664},
-      GTIG:{lat:23.066908, lon:-99.169127},
-      HLIG:{lat:17.829967, lon:-97.803575},
-      HPIG:{lat:26.936794, lon:-105.664017},
-      HSIG:{lat:29.019754, lon:-110.94928},
-      HUIG:{lat:15.76922, lon:-96.10835},
-      IGIG:{lat:20.753042, lon:-101.327803},
-      LNIG:{lat:24.898167, lon:-99.465617},
-      LPIG:{lat:24.100999, lon:-110.309311},
-      LVIG:{lat:19.72622, lon:-96.4185},
-      MAIG:{lat:23.183967, lon:-106.425517},
-      MBIG:{lat:32.407183, lon:-115.19814},
-      MCIG:{lat:27.877093, lon:-101.483627},
-      MEIG:{lat:17.925167, lon:-99.619758},
-      MGIG:{lat:17.233614, lon:-98.633759},
-      MMIG:{lat:18.288528, lon:-103.345565},
-      MNIG:{lat:25.609308, lon:-100.285228},
-      MOIG:{lat:19.646812, lon:-101.227135},
-      MYIG:{lat:20.948069, lon:-89.639614},
-      NZIG:{lat:30.373054, lon:-109.554158},
-      OXIG:{lat:17.072548, lon:-96.7329},
-      PCIG:{lat:15.70462, lon:-93.21895},
-      PDIG:{lat:25.04023, lon:-105.395923},
-      PEIG:{lat:15.99769, lon:-97.14755},
-      PLIG:{lat:18.392194, lon:-99.502368},
-      PNIG:{lat:16.3928, lon:-98.127372},
-      PPIG:{lat:19.06705, lon:-98.628148},
-      PZIG:{lat:19.329, lon:-99.178},
-      RPIG:{lat:21.88492, lon:-99.982753},
-      SCIG:{lat:18.967037, lon:-91.186588},
-      SPIG:{lat:31.04597, lon:-115.466025},
-      SRIG:{lat:27.319827, lon:-112.241057},
-      SSIG:{lat:24.8164483, lon:-107.14489},
-      TEIG:{lat:20.226, lon:-88.276},
-      TGIG:{lat:16.77821, lon:-93.122278},
-      THIG:{lat:14.8823, lon:-92.2958},
-      TJIG:{lat:32.433376, lon:-116.67625},
-      TLIG:{lat:17.562652, lon:-98.5665},
-      TMIG:{lat:19.348953, lon:-102.311172},
-      TOIG:{lat:18.0956833, lon:-97.0646133},
-      TPIG:{lat:18.42021, lon:-97.361985},
-      TSIG:{lat:25.604786, lon:-109.046506},
-      TUIG:{lat:18.03375, lon:-94.42254},
-      TXIG:{lat:17.2532217, lon:-97.7676667},
-      YAIG:{lat:18.862517, lon:-99.066987},
-      YOIG:{lat:16.856545, lon:-97.54565},
-      ZAIG:{lat:22.769176, lon:-102.567122},
-      ZIIG:{lat:17.606869, lon:-101.4644987}
-    };
-
-    const SPEED = 8;
-    const SLOT_COLORS = ['#c62828','#1565c0','#2e7d32','#6a1b9a','#ef6c00','#00838f','#8e24aa'];
-
-    const slotsContainer = document.getElementById('slots');
-    const btnAddSlot = document.getElementById('btnAddSlot');
-
-    const slotState = [];
-    const stationMarkers = {};
-    const stationUsage = {};
-
-    const mapLoc = L.map('mapLocalizacion').setView([23, -102], 5.3);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(mapLoc);
-
-    let epicenterMarker = null;
-
-    mapLoc.on('click', function(e) {
-      const lat = e.latlng.lat;
-      const lon = e.latlng.lng;
-
-      if (epicenterMarker) mapLoc.removeLayer(epicenterMarker);
-
-      epicenterMarker = L.marker(e.latlng).addTo(mapLoc)
-        .bindPopup(`<b>Punto marcado</b><br>Lat: ${lat.toFixed(4)}°<br>Lon: ${lon.toFixed(4)}°`)
-        .openPopup();
-
-      document.getElementById('epicLat').textContent = lat.toFixed(4);
-      document.getElementById('epicLon').textContent = lon.toFixed(4);
-    });
-
-    function createSlot() {
-      const index = slotState.length;
-      const color = SLOT_COLORS[index % SLOT_COLORS.length];
-
-      const slot = document.createElement('div');
-      slot.className = 'slot';
-
-      slot.innerHTML = `
-        <div class="slot-header">
-          <div class="slot-title">
-            <span class="color-dot" style="background:${color};"></span>
-            Estación ${index + 1}
-          </div>
-          <button class="btn-remove-slot" title="Eliminar estación">❌</button>
-        </div>
-        <div class="slot-grid">
-          <div>
-            <label>Clave de estación</label>
-            <select class="sel-estacion">
-              <option value="">— Selecciona —</option>
-            </select>
-          </div>
-          <div>
-            <label>S–P (s)</label>
-            <input type="number" step="0.1" class="inp-sp">
-          </div>
-          <div class="dist">
-            Distancia:<br>
-            <span class="value">—</span> km
-          </div>
-        </div>
-      `;
-
-      slotsContainer.appendChild(slot);
-
-      const sel = slot.querySelector('.sel-estacion');
-      const inp = slot.querySelector('.inp-sp');
-      const distSpan = slot.querySelector('.dist .value');
-
-      Object.keys(stationData).forEach(code => {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = code;
-        sel.appendChild(opt);
-      });
-
-      const state = { select: sel, input: inp, distSpan, circle: null, color, currentCode: '' };
-      slotState.push(state);
-
-      sel.addEventListener('change', () => updateSlot(state));
-      inp.addEventListener('input', () => updateSlot(state));
-
-      slot.querySelector('.btn-remove-slot').addEventListener('click', () => {
-        if (state.circle) mapLoc.removeLayer(state.circle);
-
-        if (state.currentCode) {
-          stationUsage[state.currentCode]--;
-          if (stationUsage[state.currentCode] <= 0 && stationMarkers[state.currentCode]) {
-            mapLoc.removeLayer(stationMarkers[state.currentCode]);
-            delete stationMarkers[state.currentCode];
-          }
-        }
-
-        slot.remove();
-        const i = slotState.indexOf(state);
-        if (i >= 0) slotState.splice(i, 1);
-      });
-    }
-
-    btnAddSlot.addEventListener('click', () => {
-      createSlot();
-      slotsContainer.lastElementChild.scrollIntoView({behavior:'smooth', block:'nearest'});
-    });
-
-    // Crear una fila inicial
-    createSlot();
-
-    function updateSlot(state) {
-      const oldCode = state.currentCode;
-      const newCode = state.select.value;
-      const sp = parseFloat(state.input.value);
-
-      if (oldCode && oldCode !== newCode) {
-        stationUsage[oldCode]--;
-        if (stationUsage[oldCode] <= 0 && stationMarkers[oldCode]) {
-          mapLoc.removeLayer(stationMarkers[oldCode]);
-          delete stationMarkers[oldCode];
-        }
-      }
-
-      state.currentCode = newCode;
-
-      if (newCode) {
-        const st = stationData[newCode];
-        if (st) {
-          if (!stationMarkers[newCode]) {
-            const marker = L.marker([st.lat, st.lon]).addTo(mapLoc);
-            marker.bindTooltip(newCode, {
-              permanent: true,
-              direction: 'top',
-              offset: [0, -10],
-              className: 'station-tooltip'
-            }).openTooltip();
-            marker.bindPopup(
-              `<b>${newCode}</b><br>Lat: ${st.lat.toFixed(4)}°<br>Lon: ${st.lon.toFixed(4)}°`
-            );
-            stationMarkers[newCode] = marker;
-          }
-          stationUsage[newCode] = (stationUsage[newCode] || 0) + 1;
-        }
-      }
-
-      if (state.circle) {
-        mapLoc.removeLayer(state.circle);
-        state.circle = null;
-      }
-
-      if (!newCode || !isFinite(sp) || sp <= 0) {
-        state.distSpan.textContent = '—';
-        return;
-      }
-
-      const st = stationData[newCode];
-      const distKm = sp * SPEED;
-      state.distSpan.textContent = distKm.toFixed(1);
-
-      state.circle = L.circle([st.lat, st.lon], {
-        radius: distKm * 1000,
-        color: state.color,
-        weight: 2,
-        fillColor: state.color,
-        fillOpacity: 0.18
-      }).addTo(mapLoc);
-    }
   </script>
 </body>
 </html>
