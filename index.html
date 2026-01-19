@@ -48,7 +48,7 @@
       1) Observa en el sismograma el arribo de la onda P y de la onda S.<br>
       2) Ingresa sus tiempos en segundos.<br>
       3) Mide la amplitud máxima en mm del trazado.<br>
-      4) La línea distancia-amplitud trazada sobre el sismograma dará la magnitud aproximada.
+      4) La línea distancia–amplitud trazada sobre el nomograma dará la magnitud aproximada.
     </p>
 
     <label for="p">Tiempo de arribo P (s)</label>
@@ -84,6 +84,212 @@
     </div>
 
   </div>
-  
+ <script>
+    // Parámetros del nomograma
+    const dMin = 5;     // 0 de magnitud alineado con 5 km
+    const dMax = 600;
+    const aMin = 0.1;
+    const aMax = 200;
+    const mMin = 0;
+    const mMax = 6;     // eje central marcado 0–6
+
+    const svgHeight = 420;
+    const topMargin = 30;
+    const bottomMargin = 40;
+    const axisHeight = svgHeight - topMargin - bottomMargin;
+
+    const xDist = 50;
+    const xMag  = 160;
+    const xAmp  = 270;
+
+    // Constantes para la calibración magnitud–distancia:
+    // M = 0 ↔ 5 km,  M = 6 ↔ 350 km
+    const logD0 = Math.log10(5);
+    const logD6 = Math.log10(350);
+    const slopeMag = (logD6 - logD0) / 6.0;
+
+    function yFromLog(value, vMin, vMax) {
+      const logMin = Math.log10(vMin);
+      const logMax = Math.log10(vMax);
+      const t = (Math.log10(value) - logMin) / (logMax - logMin);
+      return topMargin + (1 - t) * axisHeight;
+    }
+
+    // De magnitud a posición vertical (y)
+    function yFromMag(M) {
+      const logDM = logD0 + slopeMag * M; // log10(distancia equivalente)
+      const logMin = Math.log10(dMin);
+      const logMax = Math.log10(dMax);
+      const t = (logDM - logMin) / (logMax - logMin);
+      return topMargin + (1 - t) * axisHeight;
+    }
+
+    // Inversa: de y a magnitud (para leer la intersección de la recta)
+    function magFromY(y) {
+      const logMin = Math.log10(dMin);
+      const logMax = Math.log10(dMax);
+      const t = ( (topMargin + axisHeight) - y ) / axisHeight;
+      const logDM = logMin + t * (logMax - logMin);
+      const M = (logDM - logD0) / slopeMag;
+      return M;
+    }
+
+    function drawAxes() {
+      const axes = document.getElementById("axes");
+      axes.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
+
+      function line(x1, y1, x2, y2, cls) {
+        const el = document.createElementNS(ns, "line");
+        el.setAttribute("x1", x1);
+        el.setAttribute("y1", y1);
+        el.setAttribute("x2", x2);
+        el.setAttribute("y2", y2);
+        el.setAttribute("class", cls);
+        axes.appendChild(el);
+      }
+
+      function textEl(x, y, txt, anchor="middle", cls="axis-label") {
+        const el = document.createElementNS(ns, "text");
+        el.setAttribute("x", x);
+        el.setAttribute("y", y);
+        el.setAttribute("text-anchor", anchor);
+        el.setAttribute("class", cls);
+        el.textContent = txt;
+        axes.appendChild(el);
+      }
+
+      // Ejes
+      line(xDist, topMargin, xDist, topMargin+axisHeight, "axis-line");
+      line(xMag,  topMargin, xMag,  topMargin+axisHeight, "axis-line");
+      line(xAmp,  topMargin, xAmp,  topMargin+axisHeight, "axis-line");
+
+      textEl(xDist, 18, "DISTANCIA (km)");
+      textEl(xMag,  18, "MAGNITUD");
+      textEl(xAmp,  18, "AMPLITUD (mm)");
+
+      // Ticks distancia (log) empezando en 5 km
+      [5,10,20,30,50,100,200,300,500].forEach(v => {
+        const y = yFromLog(v, dMin, dMax);
+        line(xDist-4, y, xDist+4, y, "axis-line");
+        textEl(xDist-8, y+3, v, "end", "tick-label");
+      });
+
+      // Ticks magnitud (calibrados)
+      for (let m = mMin; m <= mMax; m++) {
+        const y = yFromMag(m);
+        line(xMag-4, y, xMag+4, y, "axis-line");
+        textEl(xMag+8, y+3, m, "start", "tick-label");
+      }
+
+      // Ticks amplitud (log)
+      [0.1,0.2,0.5,1,2,5,10,20,50,100,200].forEach(v => {
+        const y = yFromLog(v, aMin, aMax);
+        line(xAmp-4, y, xAmp+4, y, "axis-line");
+        textEl(xAmp+8, y+3, v, "start", "tick-label");
+      });
+    }
+
+    function calcularML() {
+      const tP = parseFloat(document.getElementById("p").value);
+      const tS = parseFloat(document.getElementById("s").value);
+      const A  = parseFloat(document.getElementById("amp").value);
+      const resultado = document.getElementById("resultado");
+
+      if (isNaN(tP) || isNaN(tS) || isNaN(A)) {
+        resultado.textContent = "Completa todos los campos.";
+        limpiar();
+        return;
+      }
+
+      const SP = tS - tP;
+      if (SP <= 0) {
+        resultado.textContent = "S debe ser mayor que P.";
+        limpiar();
+        return;
+      }
+
+      const dist = SP * 8; // km
+      if (dist < dMin || dist > dMax || A < aMin || A > aMax) {
+        resultado.textContent = "Valores fuera del rango del nomograma.";
+        limpiar();
+        return;
+      }
+
+      // Aquí NO usamos fórmula analítica, sino la intersección gráfica
+      const ML = trazar(dist, A);
+      resultado.textContent = `Magnitud estimada: ${ML.toFixed(2)}`;
+    }
+
+    function limpiar() {
+      document.getElementById("plot").innerHTML = "";
+    }
+
+    function trazar(dist, ampVal) {
+      const plot = document.getElementById("plot");
+      plot.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
+
+      function el(type, attrs) {
+        const e = document.createElementNS(ns, type);
+        for (const k in attrs) e.setAttribute(k, attrs[k]);
+        plot.appendChild(e);
+      }
+
+      const yD = yFromLog(dist, dMin, dMax);
+      const yA = yFromLog(ampVal, aMin, aMax);
+
+      // y en el eje de magnitud donde cruza la recta
+      const tLine = (xMag - xDist) / (xAmp - xDist);
+      const yCross = yD + tLine * (yA - yD);
+
+      // Magnitud a partir de esa posición vertical
+      const ML = magFromY(yCross);
+
+      // Línea distancia–amplitud
+      el("line", { x1:xDist, y1:yD, x2:xAmp, y2:yA, class:"mag-line" });
+      // Guía horizontal en magnitud (coincide con la recta)
+      el("line", { x1:xDist, y1:yCross, x2:xAmp, y2:yCross, class:"guide-line" });
+      // Punto en eje de magnitud
+      el("circle", { cx:xMag, cy:yCross, r:4, class:"point" });
+
+      return ML;
+    }
+
+    // Registrar service worker para PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", drawAxes);
+  </script>
+
+  <!-- Modal para zoom de imágenes -->
+  <div id="imgModal"
+       style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%;
+              background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
+    <img id="modalImg" src="" style="max-width:90%; max-height:90%; border-radius:12px;">
+  </div>
+
+  <script>
+    // Zoom en las imágenes de sismogramas
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("img").forEach(img => {
+        img.style.cursor = "zoom-in";
+        img.addEventListener("click", () => {
+          document.getElementById("modalImg").src = img.src;
+          document.getElementById("imgModal").style.display = "flex";
+        });
+      });
+
+      document.getElementById("imgModal").addEventListener("click", () => {
+        document.getElementById("imgModal").style.display = "none";
+      });
+    });
+  </script>
+  <!-- aquí va el JS original SIN CAMBIOS (lo omito por brevedad) -->
+  <!-- pega tu script completo debajo tal como lo tienes -->
 </body>
 </html>
