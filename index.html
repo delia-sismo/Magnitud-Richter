@@ -8,6 +8,92 @@
   <link rel="manifest" href="manifest.json" />
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f4f7; }
+    .card { background: white; padding: 20px; border-radius: 16px; max-width: 500px; margin: 20px auto; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+    h2 { margin-top: 0; color: #004b6b; text-align: center; }
+    label { display: block; margin-top: 12px; font-weight: bold; font-size: 14px; }
+    input { width: 100%; padding: 8px 10px; margin-top: 4px; border-radius: 8px; border: 1px solid #ccd3da; box-sizing: border-box; }
+    button { margin-top: 18px; width: 100%; padding: 12px; background: #004b6b; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #003c57; }
+    .resultado { margin-top: 14px; font-size: 18px; font-weight: bold; text-align: center; color: #222; }
+    .nota { margin-top: 8px; font-size: 12px; color: #555; text-align: center; }
+    svg { width: 100%; height: 420px; margin-top: 18px; background: #f8fafc; border-radius: 12px; border: 1px solid #dde3ea; }
+    .axis-label { font-size: 11px; fill: #222; }
+    .tick-label { font-size: 9px; fill: #444; }
+    .axis-line { stroke: #555; stroke-width: 1; }
+    .guide-line { stroke: #999; stroke-width: 0.5; stroke-dasharray: 3 3; }
+    .mag-line { stroke: #c62828; stroke-width: 2; }
+    .point { fill: #c62828; }
+    .logos { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .logos img { height:60px; }
+    .agradecimiento { font-size:12px; text-align:center; margin-top:20px; color:#333; padding:10px; }
+    p { font-size:13px; color:#333; line-height:1.45; }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <!-- LOGOS -->
+    <div class="logos">
+      <img src="ssn.png" alt="Servicio Sismológico Nacional">
+      <img src="dgapa.png" alt="DGAPA-UNAM">
+    </div>
+
+    <h2>Calculadora de Magnitud (ML)</h2>
+
+    <p><strong>Magnitud sísmica:</strong> es una medida del tamaño de un sismo basada en la energía radiada. No es lo mismo que la intensidad; la magnitud es una cantidad única para el evento, mientras que la intensidad varía según la distancia y condiciones del lugar.</p>
+
+    <p>Aunque se popularizó como “escala de Richter”, en realidad hoy se emplean distintas escalas según el tipo de registro y distancia, como <em>ML</em> (local), <em>mb</em> (ondas compresionales), <em>MS</em> (superficiales) y <em>Mw</em> (momento sísmico). La figura de esta calculadora usa un nomograma tipo Richter para fines educativos.</p>
+
+    <p><strong>Instrucciones:</strong><br>
+      1) Observa en el sismograma el arribo de la onda P y de la onda S.<br>
+      2) Ingresa sus tiempos en segundos.<br>
+      3) Mide la amplitud máxima en mm del trazado.<br>
+      4) La línea distancia–amplitud trazada sobre el nomograma dará la magnitud aproximada.
+    </p>
+
+    <label for="p">Tiempo de arribo P (s)</label>
+    <input type="number" id="p" step="0.01" />
+
+    <label for="s">Tiempo de arribo S (s)</label>
+    <input type="number" id="s" step="0.01" />
+
+    <label for="amp">Amplitud máxima (mm)</label>
+    <input type="number" id="amp" step="0.01" />
+
+    <button onclick="calcularML()">Calcular magnitud y trazar recta</button>
+
+    <div class="resultado" id="resultado"></div>
+    <div class="nota">Nomograma educativo basado en relación distancia–amplitud.</div>
+
+    <svg id="nomograma" viewBox="0 0 320 420">
+      <g id="axes"></g>
+      <g id="plot"></g>
+    </svg>
+
+    <h3 style="text-align:center; color:#004b6b; margin-top:25px;">Sismogramas</h3>
+    <p style="font-size:12px; text-align:center; color:#444; margin-top:0;">Lecturas para el ejercicio</p>
+
+    <img src="ARIG.jpg" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="CMIG.jpg" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+    <img src="MOIG.jpg" style="width:100%; margin-top:15px; border-radius:12px; border:1px solid #ccc;">
+
+    <!-- AGRADECIMIENTO -->
+    <div class="agradecimiento">
+      <strong>Gracias al proyecto PAPIME PE107023</strong><br>
+      por los recursos proporcionados para la elaboración de esta calculadora.
+    </div>
+
+  </div>
+  <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#004b6b" />
+  <title>Calculadora de Magnitud Sísmica</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f4f7; }
     .card { background: white; padding: 20px; border-radius: 16px; max-width: 430px; margin: 20px auto; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
     h2 { margin-top: 0; color: #004b6b; text-align: center; }
     label { display: block; margin-top: 12px; font-weight: bold; font-size: 14px; }
